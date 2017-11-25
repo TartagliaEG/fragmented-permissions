@@ -1,12 +1,9 @@
 package br.com.tartagliaeg.fragmented.permissions.core;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,58 +12,42 @@ import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 
 /**
- * Created by tartagle on 23/11/2017.
+ * Created by tartaglia on 11/25/17.
  * ...
  */
-public class PermissionManager extends Fragment implements IPermissionManager {
+
+@SuppressWarnings("WeakerAccess")
+public class PermissionManager implements IPermission.Manager {
+  @SuppressWarnings("unused")
   private static final String TAG = PermissionManager.class.getName();
+  private boolean mStarted = false;
 
-  private static final String SP_NAME = TAG + ".PERMISSIONS_SHARED_PREFERENCES";
-  private static final String SP_PERMISSION_NAME = TAG + ".PERMISSION_NAME";
-  private static final String SP_PERMISSION_GRANTED = TAG + ".PERMISSION_GRANTED";
-  private static final String SP_PERMISSION_ASKED = TAG + ".PERMISSION_ASKED";
-  private static final String SP_PERMISSION_NOT_ASK_AGAIN = TAG + ".PERMISSION_NOT_ASK_AGAIN";
+  private IPermission.Store mStore;
+  private IPermission.Fragment mFragment;
+  private StashedProperties mProps;
 
-  private static final int RC_ASK_FOR_PERMISSION = 2001;
-  public static final String FRAGMENT_TAG = "Fragment:" + TAG;
+  private PublishSubject<IPermission.Retriever> mPermissionsPublisher;
 
-  private static final String SS_IS_WAITING_PERMISSION = TAG + ".IS_WAITING_PERMISSION";
-  private boolean mIsWaitingPermission = false;
-
-  private PublishSubject<IPermissionStore> mPermissionsPublisher;
-
-  @Override
-  public void onCreate(@Nullable Bundle savedInstanceState) {
-    if (savedInstanceState != null)
-      mIsWaitingPermission = savedInstanceState.getBoolean(SS_IS_WAITING_PERMISSION, false);
-
-    super.onCreate(savedInstanceState);
-  }
-
-  @Override
-  public void onStart() {
-    super.onStart();
+  public void start(@NonNull IPermission.Fragment fragment, @NonNull IPermission.Store store, @NonNull StashedProperties props) {
+    mFragment = fragment;
+    mStore = store;
     mPermissionsPublisher = PublishSubject.create();
+    mProps = props;
+    mStarted = true;
   }
 
-  @Override
-  public void onStop() {
-    super.onStop();
+  public void stop() {
+    assertValidState();
     mPermissionsPublisher.onComplete();
     mPermissionsPublisher = null;
+    mFragment = null;
+    mStore = null;
+    mProps = null;
+    mStarted = false;
   }
 
-  @Override
-  public void onSaveInstanceState(Bundle outState) {
-    outState.putBoolean(SS_IS_WAITING_PERMISSION, mIsWaitingPermission);
-    super.onSaveInstanceState(outState);
-  }
-
-  @Override
-  public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-    if (requestCode != RC_ASK_FOR_PERMISSION)
-      return;
-
+  public void handlePermissionResult(@NonNull String[] permissions, @NonNull int[] grantResults) {
+    assertValidState();
     for (int i = 0; i < permissions.length; i++) {
       int grantedResult = grantResults[i];
       String permission = permissions[i];
@@ -74,18 +55,18 @@ public class PermissionManager extends Fragment implements IPermissionManager {
       boolean notAskAgain = false;
       boolean granted = grantedResult == PackageManager.PERMISSION_GRANTED;
 
-      if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M && !granted) {
-        notAskAgain = !getActivity().shouldShowRequestPermissionRationale(permission);
+      if (!granted) {
+        notAskAgain = mFragment.canAskPermissionAgain(permission);
       }
 
       Permission perm = new Permission(permission, granted, true, notAskAgain);
-      this.savePermission(perm);
+      mStore.savePermission(perm);
     }
 
+    mProps.mIsWaitingPermissionDialogResponse = false;
     mPermissionsPublisher.onNext(this);
     mPermissionsPublisher.onComplete();
     mPermissionsPublisher = PublishSubject.create();
-    mIsWaitingPermission = false;
   }
 
   /**
@@ -95,64 +76,100 @@ public class PermissionManager extends Fragment implements IPermissionManager {
    * @return An observable that will be called when the permissions request receives a result.
    */
   @Override
-  public Observable<IPermissionStore> askForPermissions(String... permissions) {
-    if (mIsWaitingPermission)
+  @NonNull
+  public Observable<IPermission.Retriever> askForPermissions(String... permissions) {
+    assertValidState();
+    if (mProps.mIsWaitingPermissionDialogResponse)
       return mPermissionsPublisher;
 
-    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.M)
-      return Observable.just((IPermissionStore) this);
+    boolean isAllGranted = true;
 
-    mIsWaitingPermission = true;
-    this.requestPermissions(permissions, RC_ASK_FOR_PERMISSION);
+    for (int i = 0; i < permissions.length && isAllGranted; i++)
+      isAllGranted = mStore.isPermissionGranted(permissions[i]);
+
+    if (isAllGranted)
+      return Observable.just((IPermission.Retriever) this);
+
+    mProps.mIsWaitingPermissionDialogResponse = true;
+    mFragment.showPermissionDialog(permissions);
 
     return mPermissionsPublisher;
   }
 
   @Override
-  public Observable<IPermissionStore> askForNotAskedPermissions(String... permissions) {
+  @NonNull
+  public Observable<IPermission.Retriever> askForNotAskedPermissions(String... permissions) {
+    assertValidState();
+    if (mProps.mIsWaitingPermissionDialogResponse)
+      return mPermissionsPublisher;
+
     List<String> notAsked = new ArrayList<>();
+    boolean isAllGranted = true;
 
-    for (String permission : permissions) {
-      Permission perm = retrievePermission(permission);
+    for (int i = 0; i < permissions.length; i++) {
+      String permission = permissions[i];
 
-      if (!perm.isAsked())
+      boolean granted = mStore.isPermissionGranted(permission);
+      boolean asked = mStore.isPermissionAsked(permission);
+      isAllGranted = granted && isAllGranted;
+
+      if (!granted && !asked)
         notAsked.add(permission);
     }
 
-    if (notAsked.size() == 0)
-      return Observable.just((IPermissionStore) this);
+    if (isAllGranted || notAsked.size() == 0)
+      return Observable.just((IPermission.Retriever) this);
 
     return askForPermissions(notAsked.toArray(new String[notAsked.size()]));
   }
 
-
   @Override
   public Permission retrievePermission(String permissionName) {
-    SharedPreferences pref = this.getContext().getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
-    boolean permissionGranted = true;
-
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-      permissionGranted = this.getContext().checkSelfPermission(permissionName) == PackageManager.PERMISSION_GRANTED;
-    }
-
+    assertValidState();
     return new Permission(
-        pref.getString(SP_PERMISSION_NAME + permissionName, permissionName),
-        permissionGranted,
-        pref.getBoolean(SP_PERMISSION_ASKED + permissionName, false),
-        pref.getBoolean(SP_PERMISSION_NOT_ASK_AGAIN + permissionName, false)
+      permissionName,
+      mStore.isPermissionGranted(permissionName),
+      mStore.isPermissionAsked(permissionName),
+      mStore.isPermissionNotAskAgain(permissionName)
     );
   }
 
+  private void assertValidState() {
+    if (!mStarted)
+      throw new IllegalStateException("Can't call PermissionManager methods before start method was called.");
+  }
 
-  private void savePermission(Permission perm) {
-    String name = perm.getPermissionName();
+  public static class StashedProperties implements Parcelable {
+    boolean mIsWaitingPermissionDialogResponse;
 
-    getActivity().getSharedPreferences(SP_NAME, Context.MODE_PRIVATE)
-        .edit()
-        .putString(SP_PERMISSION_NAME + name, perm.getPermissionName())
-        .putBoolean(SP_PERMISSION_NOT_ASK_AGAIN + name, perm.isNotAskAgain())
-        .putBoolean(SP_PERMISSION_GRANTED + name, perm.isGranted())
-        .putBoolean(SP_PERMISSION_ASKED + name, perm.isAsked())
-        .apply();
+    @Override
+    public int describeContents() {
+      return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+      dest.writeByte(this.mIsWaitingPermissionDialogResponse ? (byte) 1 : (byte) 0);
+    }
+
+    public StashedProperties() {
+    }
+
+    protected StashedProperties(Parcel in) {
+      this.mIsWaitingPermissionDialogResponse = in.readByte() != 0;
+    }
+
+    public static final Parcelable.Creator<StashedProperties> CREATOR = new Parcelable.Creator<StashedProperties>() {
+      @Override
+      public StashedProperties createFromParcel(Parcel source) {
+        return new StashedProperties(source);
+      }
+
+      @Override
+      public StashedProperties[] newArray(int size) {
+        return new StashedProperties[size];
+      }
+    };
   }
 }
+

@@ -1,11 +1,11 @@
 package br.com.tartagliaeg.fragmented.permissions.core;
 
 /**
- * Created by tartagle on 23/11/2017.
+ * Created by tartaglia on 23/11/2017.
  * ...
  */
 @SuppressWarnings("WeakerAccess")
-public class Permission {
+public class Permission implements IPermission {
   private final String mPermission;
   private final boolean mGranted;
   private final boolean mNotAskAgain;
@@ -14,11 +14,11 @@ public class Permission {
   @Override
   public String toString() {
     return "Permission { " +
-        "mPermission: " + mPermission +
-        ", mGranted: " + mGranted +
-        ", mNotAskAgain: " + mNotAskAgain +
-        ", mAsked: " + mAsked +
-        " }";
+      "mPermission: " + mPermission +
+      ", mGranted: " + mGranted +
+      ", mNotAskAgain: " + mNotAskAgain +
+      ", mAsked: " + mAsked +
+      " }";
   }
 
   /**
@@ -51,18 +51,25 @@ public class Permission {
   }
 
   @Override
+  @SuppressWarnings("SimplifiableIfStatement")
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     Permission that = (Permission) o;
 
+    if (mGranted != that.mGranted) return false;
+    if (mNotAskAgain != that.mNotAskAgain) return false;
+    if (mAsked != that.mAsked) return false;
     return mPermission.equals(that.mPermission);
-
   }
 
   @Override
   public int hashCode() {
-    return mPermission.hashCode();
+    int result = mPermission.hashCode();
+    result = 31 * result + (mGranted ? 1 : 0);
+    result = 31 * result + (mNotAskAgain ? 1 : 0);
+    result = 31 * result + (mAsked ? 1 : 0);
+    return result;
   }
 }
