@@ -1,5 +1,7 @@
 package br.com.tartagliaeg.fragmented.permissions.core;
 
+import android.content.pm.PackageManager;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -15,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 /**
  * Created by tartaglia on 11/25/17.
+ * ...
  */
 @RunWith(MockitoJUnitRunner.class)
 public class PermissionManagerTest {
@@ -198,6 +201,56 @@ public class PermissionManagerTest {
 
     Mockito.verify(fragment, Mockito.times(1)).showPermissionDialog(new String[]{"permission2", "permission4"});
     assertTrue(props.mIsWaitingPermissionDialogResponse);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void handlePermissionsResultShouldThrowErrorWhenCalledBeforeAskForPermissions() {
+    IPermission.Fragment fragment = Mockito.mock(IPermission.Fragment.class);
+    IPermission.Store store = Mockito.mock(IPermission.Store.class);
+
+    PermissionManager manager = new PermissionManager();
+    PermissionManager.StashedProperties props = new PermissionManager.StashedProperties();
+    props.mIsWaitingPermissionDialogResponse = false;
+
+    manager.start(fragment, store, props);
+    manager.handlePermissionResult(new String[]{"permission1"}, new int[]{PackageManager.PERMISSION_GRANTED});
+
+  }
+
+  @Test
+  public void handlePermissionsResultShouldCheckNAAAndPersistPermission() {
+    IPermission.Fragment fragment = Mockito.mock(IPermission.Fragment.class);
+    IPermission.Store store = Mockito.mock(IPermission.Store.class);
+
+    PermissionManager manager = new PermissionManager();
+    PermissionManager.StashedProperties props = new PermissionManager.StashedProperties();
+    props.mIsWaitingPermissionDialogResponse = true;
+
+    when(fragment.canAskPermissionAgain("permission2")).thenReturn(true);
+    when(fragment.canAskPermissionAgain("permission4")).thenReturn(false);
+
+    manager.start(fragment, store, props);
+    manager
+      .handlePermissionResult(new String[]{"permission1", "permission2", "permission3", "permission4"}, new int[]{
+        PackageManager.PERMISSION_GRANTED,
+        PackageManager.PERMISSION_DENIED,
+        PackageManager.PERMISSION_GRANTED,
+        PackageManager.PERMISSION_DENIED,
+      });
+
+    assertFalse(props.mIsWaitingPermissionDialogResponse);
+
+    Mockito.verify(store, Mockito.times(1))
+      .savePermission(Mockito.eq(new Permission("permission1", true, true, false)));
+    Mockito.verify(store, Mockito.times(1))
+      .savePermission(Mockito.eq(new Permission("permission2", false, true, false)));
+    Mockito.verify(store, Mockito.times(1))
+      .savePermission(Mockito.eq(new Permission("permission3", true, true, false)));
+    Mockito.verify(store, Mockito.times(1))
+      .savePermission(Mockito.eq(new Permission("permission4", false, true, true)));
+
+    Mockito.verify(fragment, Mockito.times(0)).canAskPermissionAgain("permission1");
+    Mockito.verify(fragment, Mockito.times(0)).canAskPermissionAgain("permission3");
   }
 
 }

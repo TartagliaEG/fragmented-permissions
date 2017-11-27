@@ -13,10 +13,10 @@ class PermissionStore implements IPermission.Store {
   private Context mContext;
   private static final String TAG = PermissionStore.class.getName();
 
-  private static final String SP_NAME = TAG + ".PERMISSIONS_SHARED_PREFERENCES";
-  private static final String SP_PERMISSION_GRANTED = TAG + ".PERMISSION_GRANTED.";
-  private static final String SP_PERMISSION_ASKED = TAG + ".PERMISSION_ASKED.";
-  private static final String SP_PERMISSION_NOT_ASK_AGAIN = TAG + ".PERMISSION_NOT_ASK_AGAIN.";
+  static final String SP_NAME = TAG + ".PERMISSIONS_SHARED_PREFERENCES";
+  static final String SP_PERMISSION_GRANTED = TAG + ".PERMISSION_GRANTED.";
+  static final String SP_PERMISSION_ASKED = TAG + ".PERMISSION_ASKED.";
+  static final String SP_PERMISSION_NOT_ASK_AGAIN = TAG + ".PERMISSION_NOT_ASK_AGAIN.";
   private boolean mStarted = false;
 
   public void start(Context context) {
@@ -26,6 +26,7 @@ class PermissionStore implements IPermission.Store {
   }
 
   public void stop() {
+    assertValidState();
     mContext = null;
     mPreferences = null;
     mStarted = false;

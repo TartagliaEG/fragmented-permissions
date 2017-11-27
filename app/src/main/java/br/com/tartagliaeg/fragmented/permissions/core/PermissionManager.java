@@ -48,6 +48,10 @@ public class PermissionManager implements IPermission.Manager {
 
   public void handlePermissionResult(@NonNull String[] permissions, @NonNull int[] grantResults) {
     assertValidState();
+
+    if (!mProps.mIsWaitingPermissionDialogResponse)
+      throw new IllegalStateException("Should not call handlePermissionResult without calling askForPermissions first.");
+
     for (int i = 0; i < permissions.length; i++) {
       int grantedResult = grantResults[i];
       String permission = permissions[i];
@@ -56,7 +60,7 @@ public class PermissionManager implements IPermission.Manager {
       boolean granted = grantedResult == PackageManager.PERMISSION_GRANTED;
 
       if (!granted) {
-        notAskAgain = mFragment.canAskPermissionAgain(permission);
+        notAskAgain = !mFragment.canAskPermissionAgain(permission);
       }
 
       Permission perm = new Permission(permission, granted, true, notAskAgain);
