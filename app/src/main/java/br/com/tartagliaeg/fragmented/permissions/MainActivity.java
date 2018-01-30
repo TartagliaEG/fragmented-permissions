@@ -14,6 +14,9 @@ import br.com.tartagliaeg.fragmented.permissions.core.IPermission;
 import br.com.tartagliaeg.fragmented.permissions.core.PermissionManagerFragment;
 import br.com.tartagliaeg.fragmented.permissions.utils.SimpleObserver;
 
+/**
+ * This activity exists for test purpose only
+ */
 public class MainActivity extends AppCompatActivity {
   private static final String TAG = MainActivity.class.getName();
   private IPermission.Requester mPermissions;
