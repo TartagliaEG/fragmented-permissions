@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.3"
+    compileSdkVersion 27
+    buildToolsVersion "27.0.3"
     defaultConfig {
         applicationId "br.com.tartagliaeg.fragmented.permissions"
         minSdkVersion 15
-        targetSdkVersion 25
+        targetSdkVersion 27
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -25,12 +25,12 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
     // https://mvnrepository.com/artifact/io.reactivex.rxjava2/rxjava
-    compile group: 'io.reactivex.rxjava2', name: 'rxjava', version: '2.1.6'
+    compile group: 'io.reactivex.rxjava2', name: 'rxjava', version: '2.1.7'
     // https://mvnrepository.com/artifact/io.reactivex.rxjava2/rxandroid
     compile group: 'io.reactivex.rxjava2', name: 'rxandroid', version: '2.0.1'
-    compile 'com.android.support:appcompat-v7:25.3.1'
-    compile 'com.android.support.constraint:constraint-layout:1.0.0-alpha7'
-    compile 'com.android.support:design:25.3.1'
+    compile 'com.android.support:appcompat-v7:27.0.2'
+    compile 'com.android.support.constraint:constraint-layout:1.1.0-beta4'
+    compile 'com.android.support:design:27.0.2'
 
     testCompile 'junit:junit:4.12'
     testCompile group: 'org.mockito', name: 'mockito-core', version: '2.12.0'
