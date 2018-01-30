@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 
 import io.reactivex.Observable;
 
@@ -21,6 +22,10 @@ public class PermissionManagerFragment extends Fragment implements IPermission.R
   public static final String FRAGMENT_TAG = "Fragment:" + TAG;
 
   private static final String SS_MANAGER_PROPERTIES = TAG + ".MANAGER_PROPERTIES";
+
+  public static IPermission.Requester getPermissionRequester(FragmentManager fm) {
+    return (IPermission.Requester) fm.findFragmentByTag(FRAGMENT_TAG);
+  }
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
