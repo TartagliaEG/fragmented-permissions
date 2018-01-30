@@ -1,10 +1,9 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 27
     buildToolsVersion "27.0.3"
     defaultConfig {
-        applicationId "br.com.tartagliaeg.fragmented.permissions"
         minSdkVersion 15
         targetSdkVersion 27
         versionCode 1
