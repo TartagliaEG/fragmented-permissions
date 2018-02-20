@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 class PermissionStore implements IPermission.Store {
   private SharedPreferences mPreferences;
   private Context mContext;
+  private final String PREFIX;
   private static final String TAG = PermissionStore.class.getName();
 
   static final String SP_NAME = TAG + ".PERMISSIONS_SHARED_PREFERENCES";
@@ -19,19 +20,24 @@ class PermissionStore implements IPermission.Store {
   static final String SP_PERMISSION_NOT_ASK_AGAIN = TAG + ".PERMISSION_NOT_ASK_AGAIN.";
   private boolean mStarted = false;
 
-  public void start(Context context) {
+  public PermissionStore(String prefix) {
+    this.PREFIX = prefix;
+  }
+
+  void start(Context context) {
     this.mContext = context.getApplicationContext();
     this.mPreferences = mContext.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
     this.mStarted = true;
   }
 
-  public void stop() {
+  void stop() {
     assertValidState();
     mContext = null;
     mPreferences = null;
     mStarted = false;
   }
 
+  @Override
   public void savePermission(Permission perm) {
     assertValidState();
     String name = perm.getPermissionName();

@@ -16,8 +16,7 @@ import io.reactivex.subjects.PublishSubject;
  * ...
  */
 
-@SuppressWarnings("WeakerAccess")
-public class PermissionManager implements IPermission.Manager {
+class PermissionManager implements IPermission.Manager {
   @SuppressWarnings("unused")
   private static final String TAG = PermissionManager.class.getName();
   private boolean mStarted = false;
@@ -28,7 +27,7 @@ public class PermissionManager implements IPermission.Manager {
 
   private PublishSubject<IPermission.Retriever> mPermissionsPublisher;
 
-  public void start(@NonNull IPermission.Fragment fragment, @NonNull IPermission.Store store, @NonNull StashedProperties props) {
+  void start(@NonNull IPermission.Fragment fragment, @NonNull IPermission.Store store, @NonNull StashedProperties props) {
     mFragment = fragment;
     mStore = store;
     mPermissionsPublisher = PublishSubject.create();
@@ -36,7 +35,7 @@ public class PermissionManager implements IPermission.Manager {
     mStarted = true;
   }
 
-  public void stop() {
+  void stop() {
     assertValidState();
     mPermissionsPublisher.onComplete();
     mPermissionsPublisher = null;
@@ -46,6 +45,7 @@ public class PermissionManager implements IPermission.Manager {
     mStarted = false;
   }
 
+  @Override
   public void handlePermissionResult(@NonNull String[] permissions, @NonNull int[] grantResults) {
     assertValidState();
 
@@ -110,9 +110,7 @@ public class PermissionManager implements IPermission.Manager {
     List<String> notAsked = new ArrayList<>();
     boolean isAllGranted = true;
 
-    for (int i = 0; i < permissions.length; i++) {
-      String permission = permissions[i];
-
+    for (String permission : permissions) {
       boolean granted = mStore.isPermissionGranted(permission);
       boolean asked = mStore.isPermissionAsked(permission);
       isAllGranted = granted && isAllGranted;
@@ -156,9 +154,11 @@ public class PermissionManager implements IPermission.Manager {
       dest.writeByte(this.mIsWaitingPermissionDialogResponse ? (byte) 1 : (byte) 0);
     }
 
+    @SuppressWarnings("WeakerAccess")
     public StashedProperties() {
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected StashedProperties(Parcel in) {
       this.mIsWaitingPermissionDialogResponse = in.readByte() != 0;
     }

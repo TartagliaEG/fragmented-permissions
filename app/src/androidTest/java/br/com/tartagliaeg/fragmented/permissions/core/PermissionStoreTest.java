@@ -37,7 +37,7 @@ public class PermissionStoreTest {
     String ACCESS_COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
 
     Context context = InstrumentationRegistry.getTargetContext();
-    PermissionStore store = new PermissionStore();
+    PermissionStore store = new PermissionStore("DEFAULT");
     store.start(context);
 
     store.savePermission(new Permission(
@@ -65,7 +65,7 @@ public class PermissionStoreTest {
 
   @Test
   public void shouldThrowIllegalStateExceptionWhenCallingMethodsBeforeStartWasCalled() {
-    PermissionStore store = new PermissionStore();
+    PermissionStore store = new PermissionStore("DEFAULT");
     int exceptionsThrown = 0;
 
     try {

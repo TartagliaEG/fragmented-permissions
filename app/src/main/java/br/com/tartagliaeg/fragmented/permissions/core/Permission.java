@@ -25,7 +25,7 @@ public class Permission implements IPermission {
    * @param permission  - Permission name
    * @param granted     - If the permission was granted
    * @param asked       - If the permission was already requested
-   * @param notAskAgain - If the user check the "not ask again" option
+   * @param notAskAgain - If the user has checked the "not ask again" option
    */
   Permission(String permission, boolean granted, boolean asked, boolean notAskAgain) {
     mPermission = permission;
