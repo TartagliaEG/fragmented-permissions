@@ -51,7 +51,7 @@ public class PermissionManagerTest {
     }
 
     try {
-      manager.stop();
+      manager.destroy();
     } catch (IllegalStateException e) {
       exceptionsThrown++;
     }
@@ -67,7 +67,7 @@ public class PermissionManagerTest {
     PermissionManager manager = new PermissionManager();
     PermissionManager.StashedProperties props = new PermissionManager.StashedProperties();
 
-    manager.start(fragment, store, props);
+    manager.create(fragment, store, props);
 
     when(store.isPermissionAsked("some_permission")).thenReturn(true);
     when(store.isPermissionGranted("some_permission")).thenReturn(true);
@@ -93,7 +93,7 @@ public class PermissionManagerTest {
     PermissionManager.StashedProperties props = new PermissionManager.StashedProperties();
     props.mIsWaitingPermissionDialogResponse = true;
 
-    manager.start(fragment, store, props);
+    manager.create(fragment, store, props);
     Observable<IPermission.Retriever> obs1 = manager.askForPermissions("some-permission");
     Observable<IPermission.Retriever> obs2 = manager.askForNotAskedPermissions("some-permission");
 
@@ -112,7 +112,7 @@ public class PermissionManagerTest {
     PermissionManager manager = new PermissionManager();
     PermissionManager.StashedProperties props = new PermissionManager.StashedProperties();
 
-    manager.start(fragment, store, props);
+    manager.create(fragment, store, props);
     Observable<IPermission.Retriever> obs1 = manager.askForPermissions();
     Observable<IPermission.Retriever> obs2 = manager.askForNotAskedPermissions();
 
@@ -131,7 +131,7 @@ public class PermissionManagerTest {
     PermissionManager manager = new PermissionManager();
     PermissionManager.StashedProperties props = new PermissionManager.StashedProperties();
 
-    manager.start(fragment, store, props);
+    manager.create(fragment, store, props);
 
     when(store.isPermissionGranted("permission1")).thenReturn(true);
     when(store.isPermissionGranted("permission2")).thenReturn(true);
@@ -169,7 +169,7 @@ public class PermissionManagerTest {
     when(store.isPermissionGranted("permission1")).thenReturn(true);
     when(store.isPermissionGranted("permission2")).thenReturn(false);
 
-    manager.start(fragment, store, props);
+    manager.create(fragment, store, props);
     Observable<IPermission.Retriever> obs1 = manager.askForPermissions("permission1", "permission2");
 
     assertNotNull(obs1);
@@ -193,7 +193,7 @@ public class PermissionManagerTest {
     when(store.isPermissionAsked("permission4")).thenReturn(false);
     when(store.isPermissionGranted(Mockito.anyString())).thenReturn(false);
 
-    manager.start(fragment, store, props);
+    manager.create(fragment, store, props);
     Observable<IPermission.Retriever> obs1 = manager
       .askForNotAskedPermissions("permission1", "permission2", "permission3", "permission4");
 
@@ -212,7 +212,7 @@ public class PermissionManagerTest {
     PermissionManager.StashedProperties props = new PermissionManager.StashedProperties();
     props.mIsWaitingPermissionDialogResponse = false;
 
-    manager.start(fragment, store, props);
+    manager.create(fragment, store, props);
     manager.handlePermissionResult(new String[]{"permission1"}, new int[]{PackageManager.PERMISSION_GRANTED});
 
   }
@@ -229,7 +229,7 @@ public class PermissionManagerTest {
     when(fragment.canAskPermissionAgain("permission2")).thenReturn(true);
     when(fragment.canAskPermissionAgain("permission4")).thenReturn(false);
 
-    manager.start(fragment, store, props);
+    manager.create(fragment, store, props);
     manager
       .handlePermissionResult(new String[]{"permission1", "permission2", "permission3", "permission4"}, new int[]{
         PackageManager.PERMISSION_GRANTED,

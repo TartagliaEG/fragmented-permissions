@@ -24,13 +24,13 @@ class PermissionStore implements IPermission.Store {
     this.PREFIX = prefix;
   }
 
-  void start(Context context) {
+  void create(Context context) {
     this.mContext = context.getApplicationContext();
     this.mPreferences = mContext.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
     this.mStarted = true;
   }
 
-  void stop() {
+  void destroy() {
     assertValidState();
     mContext = null;
     mPreferences = null;
@@ -80,7 +80,7 @@ class PermissionStore implements IPermission.Store {
 
   private void assertValidState() {
     if (!mStarted)
-      throw new IllegalStateException("Can't call PermissionStore methods before start was called");
+      throw new IllegalStateException("Can't call PermissionStore methods before create was called");
   }
 
 }

@@ -38,7 +38,7 @@ public class PermissionStoreTest {
 
     Context context = InstrumentationRegistry.getTargetContext();
     PermissionStore store = new PermissionStore("DEFAULT");
-    store.start(context);
+    store.create(context);
 
     store.savePermission(new Permission(
       ACCESS_FINE_LOCATION,
@@ -75,7 +75,7 @@ public class PermissionStoreTest {
     }
 
     try {
-      store.stop();
+      store.destroy();
     } catch (IllegalStateException e) {
       exceptionsThrown++;
     }

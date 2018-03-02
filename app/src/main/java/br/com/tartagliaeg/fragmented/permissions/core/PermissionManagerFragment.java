@@ -53,6 +53,7 @@ public class PermissionManagerFragment extends Fragment implements IPermission.R
 
   @Override
   public void onCreate(@Nullable Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
     String scope = getArguments() != null ? getArguments().getString(ARG_SCOPE) : DEFAULT_SCOPE;
 
     mManager = new PermissionManager();
@@ -62,21 +63,15 @@ public class PermissionManagerFragment extends Fragment implements IPermission.R
     if (savedInstanceState != null)
       mProps = savedInstanceState.getParcelable(SS_MANAGER_PROPERTIES);
 
-    super.onCreate(savedInstanceState);
+    mStore.create(getContext());
+    mManager.create(this, mStore, mProps);
   }
 
   @Override
-  public void onStart() {
-    super.onStart();
-    mStore.start(getContext());
-    mManager.start(this, mStore, mProps);
-  }
-
-  @Override
-  public void onStop() {
-    super.onStop();
-    mManager.stop();
-    mStore.stop();
+  public void onDestroy() {
+    super.onDestroy();
+    mManager.destroy();
+    mStore.destroy();
   }
 
   @Override

@@ -27,7 +27,7 @@ class PermissionManager implements IPermission.Manager {
 
   private PublishSubject<IPermission.Retriever> mPermissionsPublisher;
 
-  void start(@NonNull IPermission.Fragment fragment, @NonNull IPermission.Store store, @NonNull StashedProperties props) {
+  void create(@NonNull IPermission.Fragment fragment, @NonNull IPermission.Store store, @NonNull StashedProperties props) {
     mFragment = fragment;
     mStore = store;
     mPermissionsPublisher = PublishSubject.create();
@@ -35,7 +35,7 @@ class PermissionManager implements IPermission.Manager {
     mStarted = true;
   }
 
-  void stop() {
+  void destroy() {
     assertValidState();
     mPermissionsPublisher.onComplete();
     mPermissionsPublisher = null;
@@ -138,7 +138,7 @@ class PermissionManager implements IPermission.Manager {
 
   private void assertValidState() {
     if (!mStarted)
-      throw new IllegalStateException("Can't call PermissionManager methods before start method was called.");
+      throw new IllegalStateException("Can't call PermissionManager methods before create method was called.");
   }
 
   public static class StashedProperties implements Parcelable {
